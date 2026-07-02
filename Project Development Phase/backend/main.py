@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from database.connection import Base, engine
 
@@ -15,10 +16,22 @@ from routers.settlement import router as settlement_router
 from routers.ai import router as ai_router
 from routers.api import router as api_router
 from routers.loan import router as loan_router
+from routers.dashboard import router as dashboard_router
+from routers.history import router as history_router
 
 app = FastAPI(
     title="FinRelief AI",
     version="0.1.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Create database tables
@@ -30,6 +43,8 @@ app.include_router(settlement_router)
 app.include_router(ai_router)
 app.include_router(api_router)
 app.include_router(loan_router)
+app.include_router(dashboard_router)
+app.include_router(history_router)
 
 
 @app.get("/")

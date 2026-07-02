@@ -1,5 +1,7 @@
 from fastapi import APIRouter
 from services.ai_engine import generate_negotiation_strategy
+from fastapi import Depends
+from utils.security import verify_token
 
 router = APIRouter(
     prefix="/ai",
@@ -8,7 +10,9 @@ router = APIRouter(
 
 
 @router.get("/strategy")
-def ai_strategy():
+def ai_strategy(
+    token: dict = Depends(verify_token)
+):
 
     class DummyUser:
         name = "Rahul Sharma"

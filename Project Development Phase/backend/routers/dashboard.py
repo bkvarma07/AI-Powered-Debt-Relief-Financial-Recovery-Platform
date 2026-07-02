@@ -6,15 +6,12 @@ from database.connection import SessionLocal
 from models.user import User
 from models.loan import Loan
 
-from services.settlement_engine import calculate_settlement_prediction
-
 router = APIRouter(
-    prefix="/settlement",
-    tags=["Settlement Prediction"]
+    prefix="/dashboard",
+    tags=["Dashboard"]
 )
 
 
-# Database Dependency
 def get_db():
     db = SessionLocal()
     try:
@@ -23,42 +20,37 @@ def get_db():
         db.close()
 
 
-@router.get("/predict")
-def settlement_prediction(
+@router.get("/summary")
+def dashboard_summary(
     token: dict = Depends(verify_token),
     db: Session = Depends(get_db)
 ):
-    """
-    Settlement Prediction using database records.
-    """
 
-    # Get first user
     user = db.query(User).first()
 
     if not user:
         return {
-            "message": "No user found in database."
+            "success": False,
+            "message": "No user found."
         }
 
-    # Get all loans of that user
     loans = db.query(Loan).filter(
         Loan.user_id == user.user_id
     ).all()
 
-    if not loans:
-        return {
-            "message": "No loans found for this user."
-        }
+    total_outstanding = sum(
+        loan.outstanding_amount for loan in loans
+    )
 
-    # Calculate settlement prediction
-    result = calculate_settlement_prediction(
-        user,
-        loans
+    total_emi = sum(
+        loan.emi for loan in loans
     )
 
     return {
         "success": True,
-        "user": user.name,
         "total_loans": len(loans),
-        "settlement_prediction": result
+        "outstanding_debt": total_outstanding,
+        "monthly_emi": total_emi,
+        "monthly_income": user.monthly_income,
+        "monthly_expenses": user.monthly_expenses
     }

@@ -65,3 +65,24 @@ def get_user_loans(
         "total_loans": len(loans),
         "loans": loans
     }
+
+
+@router.delete("/{loan_id}")
+def delete_loan(
+    loan_id: int,
+    db: Session = Depends(get_db)
+):
+    loan = db.query(Loan).filter(Loan.loan_id == loan_id).first()
+    if not loan:
+        return {
+            "success": False,
+            "message": "Loan not found."
+        }
+    
+    db.delete(loan)
+    db.commit()
+    
+    return {
+        "success": True,
+        "message": "Loan deleted successfully."
+    }
