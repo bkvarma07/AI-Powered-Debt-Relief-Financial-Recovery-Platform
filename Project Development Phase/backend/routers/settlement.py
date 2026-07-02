@@ -1,4 +1,9 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from database.connection import SessionLocal
+from models.user import User
+from models.loan import Loan
 
 from services.settlement_engine import calculate_settlement_prediction
 
@@ -8,57 +13,48 @@ router = APIRouter(
 )
 
 
+# Database Dependency
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
 @router.get("/predict")
-def settlement_prediction():
+def settlement_prediction(db: Session = Depends(get_db)):
     """
-    Temporary demo endpoint.
-    Story 4 will connect this with the database.
+    Settlement Prediction using database records.
     """
 
-    class DummyUser:
-        monthly_income = 50000
-        monthly_expenses = 20000
+    # Get first user
+    user = db.query(User).first()
 
-    class DummyLoan:
-        def __init__(
-            self,
-            loan_id,
-            lender_name,
-            loan_type,
-            outstanding_amount,
-            interest_rate,
-            emi,
-            overdue_months
-        ):
-            self.loan_id = loan_id
-            self.lender_name = lender_name
-            self.loan_type = loan_type
-            self.outstanding_amount = outstanding_amount
-            self.interest_rate = interest_rate
-            self.emi = emi
-            self.overdue_months = overdue_months
+    if not user:
+        return {
+            "message": "No user found in database."
+        }
 
-    user = DummyUser()
+    # Get all loans of that user
+    loans = db.query(Loan).filter(
+        Loan.user_id == user.user_id
+    ).all()
 
-    loans = [
-        DummyLoan(
-            1,
-            "HDFC Bank",
-            "Personal Loan",
-            300000,
-            14,
-            12000,
-            3
-        ),
-        DummyLoan(
-            2,
-            "SBI",
-            "Education Loan",
-            180000,
-            9,
-            6000,
-            0
-        )
-    ]
+    if not loans:
+        return {
+            "message": "No loans found for this user."
+        }
 
-    return calculate_settlement_prediction(user, loans)
+    # Calculate settlement prediction
+    result = calculate_settlement_prediction(
+        user,
+        loans
+    )
+
+    return {
+        "success": True,
+        "user": user.name,
+        "total_loans": len(loans),
+        "settlement_prediction": result
+    }

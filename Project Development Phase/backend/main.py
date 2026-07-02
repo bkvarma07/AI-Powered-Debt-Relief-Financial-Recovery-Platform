@@ -13,6 +13,8 @@ from models.ai_history import AIHistory
 from routers.users import router as user_router
 from routers.settlement import router as settlement_router
 from routers.ai import router as ai_router
+from routers.api import router as api_router
+from routers.loan import router as loan_router
 
 app = FastAPI(
     title="FinRelief AI",
@@ -26,6 +28,8 @@ Base.metadata.create_all(bind=engine)
 app.include_router(user_router)
 app.include_router(settlement_router)
 app.include_router(ai_router)
+app.include_router(api_router)
+app.include_router(loan_router)
 
 
 @app.get("/")
