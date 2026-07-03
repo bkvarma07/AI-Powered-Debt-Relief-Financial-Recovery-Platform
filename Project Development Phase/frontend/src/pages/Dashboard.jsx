@@ -39,6 +39,7 @@ export default function Dashboard() {
   const [overdueMonths, setOverdueMonths] = useState("0");
   const [dueDate, setDueDate] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({});
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -81,20 +82,54 @@ export default function Dashboard() {
       return;
     }
 
-    if (!lenderName || !loanAmount || !outstandingAmount || !interestRate || !emi || !dueDate) {
-      toast.warning("Please fill in all required fields.");
+    // Comprehensive inline validation
+    const errors = {};
+    if (!lenderName || !lenderName.trim()) {
+      errors.lenderName = "Lender name cannot be empty.";
+    }
+    const amt = parseFloat(loanAmount);
+    if (!loanAmount || isNaN(amt) || amt <= 0) {
+      errors.loanAmount = "Loan amount must be greater than 0.";
+    }
+    const outAmt = parseFloat(outstandingAmount);
+    if (!outstandingAmount || isNaN(outAmt) || outAmt <= 0) {
+      errors.outstandingAmount = "Outstanding amount must be greater than 0.";
+    }
+    const rate = parseFloat(interestRate);
+    if (!interestRate || isNaN(rate) || rate < 0 || rate > 100) {
+      errors.interestRate = "Interest rate must be between 0 and 100.";
+    }
+    const emiVal = parseFloat(emi);
+    if (!emi || isNaN(emiVal) || emiVal <= 0) {
+      errors.emi = "EMI must be greater than 0.";
+    }
+    const overdue = parseInt(overdueMonths);
+    if (overdueMonths !== "" && (isNaN(overdue) || overdue < 0)) {
+      errors.overdueMonths = "Overdue months cannot be negative.";
+    }
+    const todayStr = new Date().toISOString().split("T")[0];
+    if (!dueDate) {
+      errors.dueDate = "Due date is required.";
+    } else if (dueDate < todayStr) {
+      errors.dueDate = "Due date cannot be in the past.";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      toast.warning("Please fix the validation errors in the form.");
       return;
     }
 
+    setValidationErrors({});
     setIsSaving(true);
     try {
       const payload = {
-        lender_name: lenderName,
+        lender_name: lenderName.trim(),
         loan_type: loanType,
-        loan_amount: parseFloat(loanAmount),
-        outstanding_amount: parseFloat(outstandingAmount),
-        interest_rate: parseFloat(interestRate),
-        emi: parseFloat(emi),
+        loan_amount: amt,
+        outstanding_amount: outAmt,
+        interest_rate: rate,
+        emi: emiVal,
         overdue_months: parseInt(overdueMonths) || 0,
         due_date: dueDate
       };
@@ -112,6 +147,7 @@ export default function Dashboard() {
         setEmi("");
         setOverdueMonths("0");
         setDueDate("");
+        setValidationErrors({});
         // Refresh data
         fetchData();
       } else {
@@ -203,7 +239,7 @@ export default function Dashboard() {
     <div className={styles.container}>
       {/* Header Block */}
       <div className={styles.header}>
-        <h1 className={styles.title}>Dashboard Overview</h1>
+        <h1 className={styles.title}>Welcome, {user?.name || "User"}</h1>
         <p className={styles.subtitle}>Your financial snapshot at a glance</p>
       </div>
 
@@ -375,11 +411,15 @@ export default function Dashboard() {
                   <label>Lender Name *</label>
                   <input
                     type="text"
-                    required
                     placeholder="e.g. KISHT"
+                    className={validationErrors.lenderName ? styles.inputError : ""}
                     value={lenderName}
-                    onChange={(e) => setLenderName(e.target.value)}
+                    onChange={(e) => {
+                      setLenderName(e.target.value);
+                      if (validationErrors.lenderName) setValidationErrors(prev => ({ ...prev, lenderName: "" }));
+                    }}
                   />
+                  {validationErrors.lenderName && <span className={styles.errorText}>{validationErrors.lenderName}</span>}
                 </div>
                 <div className={styles.formGroup}>
                   <label>Loan Type *</label>
@@ -402,22 +442,32 @@ export default function Dashboard() {
                   <input
                     type="number"
                     min="0"
-                    required
+                    step="any"
                     placeholder="e.g. 200000"
+                    className={validationErrors.loanAmount ? styles.inputError : ""}
                     value={loanAmount}
-                    onChange={(e) => setLoanAmount(e.target.value)}
+                    onChange={(e) => {
+                      setLoanAmount(e.target.value);
+                      if (validationErrors.loanAmount) setValidationErrors(prev => ({ ...prev, loanAmount: "" }));
+                    }}
                   />
+                  {validationErrors.loanAmount && <span className={styles.errorText}>{validationErrors.loanAmount}</span>}
                 </div>
                 <div className={styles.formGroup}>
                   <label>Outstanding Amount *</label>
                   <input
                     type="number"
                     min="0"
-                    required
+                    step="any"
                     placeholder="e.g. 188888"
+                    className={validationErrors.outstandingAmount ? styles.inputError : ""}
                     value={outstandingAmount}
-                    onChange={(e) => setOutstandingAmount(e.target.value)}
+                    onChange={(e) => {
+                      setOutstandingAmount(e.target.value);
+                      if (validationErrors.outstandingAmount) setValidationErrors(prev => ({ ...prev, outstandingAmount: "" }));
+                    }}
                   />
+                  {validationErrors.outstandingAmount && <span className={styles.errorText}>{validationErrors.outstandingAmount}</span>}
                 </div>
               </div>
 
@@ -428,22 +478,32 @@ export default function Dashboard() {
                     type="number"
                     step="0.01"
                     min="0"
-                    required
+                    max="100"
                     placeholder="e.g. 14.5"
+                    className={validationErrors.interestRate ? styles.inputError : ""}
                     value={interestRate}
-                    onChange={(e) => setInterestRate(e.target.value)}
+                    onChange={(e) => {
+                      setInterestRate(e.target.value);
+                      if (validationErrors.interestRate) setValidationErrors(prev => ({ ...prev, interestRate: "" }));
+                    }}
                   />
+                  {validationErrors.interestRate && <span className={styles.errorText}>{validationErrors.interestRate}</span>}
                 </div>
                 <div className={styles.formGroup}>
                   <label>Monthly EMI *</label>
                   <input
                     type="number"
                     min="0"
-                    required
+                    step="any"
                     placeholder="e.g. 18988"
+                    className={validationErrors.emi ? styles.inputError : ""}
                     value={emi}
-                    onChange={(e) => setEmi(e.target.value)}
+                    onChange={(e) => {
+                      setEmi(e.target.value);
+                      if (validationErrors.emi) setValidationErrors(prev => ({ ...prev, emi: "" }));
+                    }}
                   />
+                  {validationErrors.emi && <span className={styles.errorText}>{validationErrors.emi}</span>}
                 </div>
               </div>
 
@@ -454,18 +514,28 @@ export default function Dashboard() {
                     type="number"
                     min="0"
                     placeholder="e.g. 3"
+                    className={validationErrors.overdueMonths ? styles.inputError : ""}
                     value={overdueMonths}
-                    onChange={(e) => setOverdueMonths(e.target.value)}
+                    onChange={(e) => {
+                      setOverdueMonths(e.target.value);
+                      if (validationErrors.overdueMonths) setValidationErrors(prev => ({ ...prev, overdueMonths: "" }));
+                    }}
                   />
+                  {validationErrors.overdueMonths && <span className={styles.errorText}>{validationErrors.overdueMonths}</span>}
                 </div>
                 <div className={styles.formGroup}>
                   <label>Due Date *</label>
                   <input
                     type="date"
-                    required
+                    min={new Date().toISOString().split("T")[0]}
+                    className={validationErrors.dueDate ? styles.inputError : ""}
                     value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
+                    onChange={(e) => {
+                      setDueDate(e.target.value);
+                      if (validationErrors.dueDate) setValidationErrors(prev => ({ ...prev, dueDate: "" }));
+                    }}
                   />
+                  {validationErrors.dueDate && <span className={styles.errorText}>{validationErrors.dueDate}</span>}
                 </div>
               </div>
 
@@ -473,7 +543,7 @@ export default function Dashboard() {
                 <button
                   type="button"
                   className={styles.cancelBtn}
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={() => { setIsModalOpen(false); setValidationErrors({}); }}
                 >
                   Cancel
                 </button>

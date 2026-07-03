@@ -68,7 +68,7 @@ export default function Login() {
           localStorage.removeItem("rememberedEmail");
         }
         
-        login(response.data.access_token, response.data.user);
+        login(response.data.access_token, response.data.user, rememberMe);
         toast.success("Welcome back! Login successful.");
         navigate("/dashboard");
       } else {

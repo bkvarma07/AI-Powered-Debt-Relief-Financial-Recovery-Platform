@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Save } from "lucide-react";
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
@@ -8,6 +9,7 @@ import styles from "./Profile.module.css";
 export default function Profile() {
   const { user, updateProfileState } = useAuth();
   const toast = useToast();
+  const navigate = useNavigate();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -64,6 +66,7 @@ export default function Profile() {
       if (response.data.success) {
         updateProfileState(response.data.user);
         toast.success("Profile updated successfully.");
+        navigate("/dashboard");
       } else {
         toast.error(response.data.message || "Failed to update profile.");
       }

@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from utils.security import verify_token
+import logging
 
 from database.connection import SessionLocal
 from models.user import User
@@ -12,6 +13,8 @@ router = APIRouter(
     prefix="/settlement",
     tags=["Settlement Prediction"]
 )
+
+logger = logging.getLogger(__name__)
 
 
 # Database Dependency
@@ -31,34 +34,44 @@ def settlement_prediction(
     """
     Settlement Prediction using database records.
     """
+    try:
+        user_id = token.get("user_id")
+        user = db.query(User).filter(User.user_id == user_id).first()
 
-    # Get first user
-    user = db.query(User).first()
+        if not user:
+            return {
+                "success": False,
+                "message": "No user found in database."
+            }
 
-    if not user:
+        # Get all loans of that user
+        loans = db.query(Loan).filter(
+            Loan.user_id == user.user_id
+        ).all()
+
+        if not loans:
+            return {
+                "success": True,
+                "user": user.name,
+                "total_loans": 0,
+                "settlement_prediction": []
+            }
+
+        # Calculate settlement prediction
+        result = calculate_settlement_prediction(
+            user,
+            loans
+        )
+
         return {
-            "message": "No user found in database."
+            "success": True,
+            "user": user.name,
+            "total_loans": len(loans),
+            "settlement_prediction": result
         }
-
-    # Get all loans of that user
-    loans = db.query(Loan).filter(
-        Loan.user_id == user.user_id
-    ).all()
-
-    if not loans:
-        return {
-            "message": "No loans found for this user."
-        }
-
-    # Calculate settlement prediction
-    result = calculate_settlement_prediction(
-        user,
-        loans
-    )
-
-    return {
-        "success": True,
-        "user": user.name,
-        "total_loans": len(loans),
-        "settlement_prediction": result
-    }
+    except Exception as e:
+        logger.exception("Error predicting settlement values")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while calculating settlement forecasts."
+        )

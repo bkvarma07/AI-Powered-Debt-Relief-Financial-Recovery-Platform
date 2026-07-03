@@ -46,7 +46,7 @@ export default function Negotiation() {
     setStrategyData(null);
     try {
       // Fetch strategy from backend
-      const response = await api.get("/ai/strategy");
+      const response = await api.get(`/ai/strategy?loan_id=${selectedLoanId}`);
       setStrategyData(response.data);
 
       // Parse and sync to AI history in database

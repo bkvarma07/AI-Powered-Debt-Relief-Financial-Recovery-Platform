@@ -4,10 +4,10 @@ const api = axios.create({
     baseURL: "http://127.0.0.1:8000"
 });
 
-// Request interceptor: attach JWT token from localStorage
+// Request interceptor: attach JWT token from localStorage or sessionStorage
 api.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -26,9 +26,11 @@ api.interceptors.response.use(
             const isAuthPage = currentPath === "/" || currentPath === "/register";
 
             if (!isAuthPage) {
-                // Session expired — clear storage and redirect to login
+                // Session expired — clear both storages and redirect to login
                 localStorage.removeItem("token");
                 localStorage.removeItem("user");
+                sessionStorage.removeItem("token");
+                sessionStorage.removeItem("user");
                 window.location.href = "/";
             }
         }

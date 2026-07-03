@@ -1,19 +1,23 @@
 import os
+import logging
 from dotenv import load_dotenv
 from google import genai
 
 load_dotenv()
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-print("API Key:", GOOGLE_API_KEY)
+logger.info(f"API Key configured: {'Present' if GOOGLE_API_KEY else 'Missing'}")
 
 
 def _call_gemini(prompt: str):
 
     # No API key available
     if not GOOGLE_API_KEY:
-        print("No Gemini API Key found. Using fallback engine.")
+        logger.warning("No Gemini API Key found. Using fallback engine.")
         return None
 
     try:
@@ -27,8 +31,8 @@ def _call_gemini(prompt: str):
         return response.text
 
     except Exception as e:
-        print("Gemini API Error:", e)
-        print("Switching to fallback engine...")
+        logger.exception("Gemini API Error occurred during content generation")
+        logger.info("Switching to fallback engine...")
         return None
 
 
