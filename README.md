@@ -43,11 +43,11 @@ Developed as part of the **Google Cloud Generative AI Internship Program**, the 
 
 | Login | Dashboard |
 |--------|-----------|
-| ![](assets/screenshots/login.png) | ![](assets/screenshots/dashboard.png) |
+| ![](Project%20Development%20Phase/assets/screenshots/login.png) | ![](Project%20Development%20Phase/assets/screenshots/dashboard.png) |
 
 | AI Strategy | Settlement |
 |-------------|------------|
-| ![](assets/screenshots/ai-strategy.png) | ![](assets/screenshots/settlement.png) |
+| ![](Project%20Development%20Phase/assets/screenshots/ai-strategy.png) | ![](Project%20Development%20Phase/assets/screenshots/settlement.png) |
 
 ---
 
